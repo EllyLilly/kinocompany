@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export default function Header({ showBackButton = false }: HeaderProps) {
     const { auth } = usePage().props;
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadCount] = useState(0);
 
     const firstLetter = auth.user?.name?.charAt(0).toUpperCase() || '?';
 
