@@ -15,11 +15,9 @@ export default function MyRooms() {
     useEffect(() => {
     const saved = localStorage.getItem('myRooms');
     if (saved) {
-        // Не вызываем setState напрямую в эффекте
-        const loadedRooms = JSON.parse(saved);
-        setRooms(loadedRooms);
+        setRooms(JSON.parse(saved));
     }
-}, []); // Пустой массив зависимостей — эффект выполнится только один раз при монтировании
+}, []);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#1a1a2e] to-[#16213e]">
