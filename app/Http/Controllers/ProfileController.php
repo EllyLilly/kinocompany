@@ -7,30 +7,27 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Routing\Controller as BaseController;
 
 
-class ProfileController extends Controller
+class ProfileController extends BaseController
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
 
     public function edit()
     {
-        // Проверка на авторизацию
-        if (!Auth::check()) {
-            return redirect('/login');
-        }
-
         return Inertia::render('Profile/Edit', [
             'user' => Auth::user()
         ]);
     }
 
-    public function update(Request $request)
+    public function update(ProfileUpdateRequest $request)
     {
-        // Проверка авторизации
-        if (!Auth::check()) {
-            return redirect('/login');
-        }
-
         $userId = Auth::id();
          $user = Auth::user();
 
@@ -57,30 +54,25 @@ class ProfileController extends Controller
             $data['avatar'] = $path;
         }
 
-        //прямой запрос к БД (prepared statements)
-        DB::table('users')
+         DB::table('users')
         ->where('id', $userId)
         ->update($data);
 
-        return redirect()->back()->with('success', 'Профиль обновлён');
+    return redirect()->back()->with('success', 'Профиль обновлён');
     }
-
     public function deleteAvatar()
-{
-    if (!Auth::check()) {
-        return redirect('/login');
-    }
+    {
+        $userId = Auth::id();
+        $user = Auth::user();
 
-    $user = Auth::user();
+        if ($user->avatar) {
+            Storage::delete($user->avatar);
 
-    if ($user->avatar) {
-        Storage::delete($user->avatar);
-
-        DB::table('users')
-            ->where('id', $user->id)
+            DB::table('users')
+            ->where('id', $userId)
             ->update(['avatar' => null]);
-    }
+        }
 
-    return redirect()->back()->with('success', 'Аватар удалён');
-}
+        return redirect()->back()->with('success', 'Аватар удалён');
+    }
 }

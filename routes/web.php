@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MessageController;
-
+use App\Http\Controllers\RoomController;
+use App\Http\Controllers\RoomVideoController; // <-- ДОБАВЬ ЭТО
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -23,11 +24,14 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // создание комнаты (POST)
-Route::post('/rooms', [App\Http\Controllers\RoomController::class, 'store'])->name('rooms.store');
+Route::post('/rooms', [RoomController::class, 'store'])->name('rooms.store');
 
 // просмотр комнаты (GET)
-Route::get('/rooms/{room}', [App\Http\Controllers\RoomController::class, 'show'])->name('rooms.show');
+Route::get('/rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
 
-Route::get('/my-rooms', [App\Http\Controllers\RoomController::class, 'myRooms'])->name('my-rooms');
+Route::get('/my-rooms', [RoomController::class, 'myRooms'])->name('my-rooms');
+
+// НОВЫЙ МАРШРУТ ДЛЯ ВИДЕО - БЕЗ SANCTUM, ПРОСТО AUTH
+Route::middleware(['auth'])->post('/rooms/{room}/video', [RoomVideoController::class, 'update'])->name('rooms.video.update');
 
 require __DIR__.'/settings.php';

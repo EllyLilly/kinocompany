@@ -11,28 +11,26 @@ class RoomController extends Controller
 {
     // Создание комнаты
     public function store(Request $request)
-    {
-        // Валидация
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'video_url' => 'required|url',
-            'description' => 'nullable|string',
-        ]);
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'video_url' => 'required|url',
+        'description' => 'nullable|string',
+    ]);
 
-        // Уникальный слаг (для URL)
-        $validated['slug'] = uniqid();
+    $validated['slug'] = uniqid();
 
-        // Добавляем пользователя, если авторизован
-        if (Auth::check()) {
-            $validated['user_id'] = Auth::id();
-        }
-
-        // Создаем комнату
-        $room = Room::create($validated);
-
-        // Редирект на страницу комнаты
-        return redirect()->route('rooms.show', $room->id);
+    if (Auth::check()) {
+        $validated['user_id'] = Auth::id();
     }
+
+    // Просто извлекаем ID
+    $validated['video_id'] = Room::extractVideoIdFromUrl($validated['video_url']);
+
+    $room = Room::create($validated);
+
+    return redirect()->route('rooms.show', $room->id);
+}
 
     // Просмотр комнаты
     public function show(Room $room)
