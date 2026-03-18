@@ -14,6 +14,9 @@ class Room extends Model
         'description',
         'user_id',
         'is_active',
+        'current_time',
+        'playing',
+        'last_state_update',
     ];
 
     protected $casts = [
@@ -37,7 +40,7 @@ class Room extends Model
         // VK и VK Video - ищем паттерн video-XXXXXX_YYYYYYY в любом домене
         $vkPattern = '/(?:vk\.com|vkvideo\.ru)\/video([-0-9_]+)/';
         if (preg_match($vkPattern, $url, $matches)) {
-            return $matches[1]; // вернет "-122033519_456245998"
+            return $matches[1];
         }
 
         return null;

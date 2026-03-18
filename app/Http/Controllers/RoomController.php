@@ -24,7 +24,7 @@ class RoomController extends Controller
         $validated['user_id'] = Auth::id();
     }
 
-    // Просто извлекаем ID
+    // Извлечение ID
     $validated['video_id'] = Room::extractVideoIdFromUrl($validated['video_url']);
 
     $room = Room::create($validated);
@@ -36,8 +36,8 @@ class RoomController extends Controller
     public function show(Room $room)
     {
         return Inertia::render('Rooms/Show', [
-            'room' => $room,
-            'roomId' => $room->id,
+        'room' => $room,
+        'roomId' => $room->id,
         ]);
     }
 

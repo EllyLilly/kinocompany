@@ -10,7 +10,7 @@ class RoomVideoController extends Controller
 {
     public function update(Request $request, Room $room)
     {
-        // Проверяем, что пользователь авторизован
+        // Проверка, что пользователь авторизован
         if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
@@ -20,15 +20,15 @@ class RoomVideoController extends Controller
             'video_url' => 'required|url'
         ]);
 
-        // Извлекаем video_id
+        // Извлечение video_id
         $videoId = Room::extractVideoIdFromUrl($request->video_url);
 
-        // Обновляем комнату
+        // Обновление комнаты
         $room->video_url = $request->video_url;
         $room->video_id = $videoId;
         $room->save();
 
-        // Возвращаем ответ (для Inertia)
+        // Возвра ответа
         return redirect()->back()->with([
             'success' => 'Видео сохранено',
             'video_id' => $videoId
