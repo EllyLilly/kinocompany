@@ -38,6 +38,10 @@ composer install
 # Установить зависимости Node.js
 npm install
 
+# Установка Pusher (для real-time)
+composer require pusher/pusher-php-server
+npm install laravel-echo pusher-js
+
 # Настроить окружение
 cp .env.example .env
 php artisan key:generate
