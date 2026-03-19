@@ -15,4 +15,6 @@ const echo = new Echo({
     logToConsole: true
 });
 
+window.Echo = echo;
+
 export default echo;

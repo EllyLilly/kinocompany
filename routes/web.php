@@ -75,4 +75,23 @@ Route::get('/test-event', function() {
 
 Route::get('/rooms/{room}/state', App\Http\Controllers\RoomStateController::class)->name('rooms.state');
 
+
+// Чат комнаты
+Route::middleware(['auth'])->group(function () {
+    Route::get('/rooms/{room}/messages', [App\Http\Controllers\RoomChatController::class, 'index']);
+    Route::post('/rooms/{room}/messages', [App\Http\Controllers\RoomChatController::class, 'store']);
+});
+
+Route::delete('/rooms/{room}', App\Http\Controllers\RoomDeleteController::class)
+    ->name('rooms.delete')
+    ->middleware('auth');
+
+    Route::get('/test-broadcast', function () {
+    broadcast(new \App\Events\MessageSent(\App\Models\Message::latest()->first()));
+});
+
+Route::delete('/rooms/{room}/chat/clear', App\Http\Controllers\ChatClearController::class)
+    ->name('rooms.chat.clear')
+    ->middleware('auth');
+
 require __DIR__.'/settings.php';

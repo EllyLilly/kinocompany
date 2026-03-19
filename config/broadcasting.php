@@ -18,6 +18,7 @@ return [
             'scheme' => 'https',
             'encrypted' => true,
             'useTLS' => true,
+            'verify' => false,
             'curl_options' => [
                 CURLOPT_SSL_VERIFYPEER => false,
                 ],

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, router } from '@inertiajs/react';
 import Header from '@/components/Header';
 import echo from '@/echo';
+import RoomChat from '@/components/RoomChat';
 
 interface Props {
     room: {
@@ -18,9 +19,11 @@ interface Props {
             name: string;
         } | null;
     };
+    csrf_token: string;
 }
 
-export default function Show({ room, auth }: Props) {
+export default function Show({ room, auth, csrf_token }: Props) {
+
     const [wasExternallyPaused] = useState(false);
     const seekDebounceRef = useRef<NodeJS.Timeout | null>(null);
     const [videoUrl, setVideoUrl] = useState(room.video_url || '');
@@ -31,8 +34,10 @@ export default function Show({ room, auth }: Props) {
     const [isPlayerReady, setIsPlayerReady] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [prevTime, setPrevTime] = useState(0);
+    const [chatKey, setChatKey] = useState(0);
 
     const playerRef = useRef<HTMLIFrameElement>(null);
+    const chatChannelRef = useRef<any>(null);
     const syncTimeoutRef = useRef<any>(null);
 
     const isRutube = room.video_id && room.video_id.length > 20;
@@ -106,14 +111,20 @@ export default function Show({ room, auth }: Props) {
         if (!auth.user) return;
         if (isSyncing && action !== 'sync_request') return;
 
-        router.post(`/rooms/${room.id}/control`, {
-            action: action,
-            currentTime: time !== undefined ? time : currentTime
-        }, {
-            preserveScroll: true,
-            preserveState: true,
-            onError: (errors) => console.error('Error sending control:', errors)
-        });
+
+
+                fetch(`/rooms/${room.id}/control`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrf_token,
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                action: action,
+                currentTime: time !== undefined ? time : currentTime
+            })
+});
     };
 
     useEffect(() => {
@@ -152,9 +163,11 @@ export default function Show({ room, auth }: Props) {
                 return;
             }
 
+
+
             setIsSyncing(true);
             if (e.action === 'play') {
-                //setWasExternallyPaused(false);
+
 
                 if (Math.abs(currentTime - e.currentTime) > 3) {
                     seekVideo(e.currentTime);
@@ -163,9 +176,9 @@ export default function Show({ room, auth }: Props) {
                     playVideo();
                 }
             } else if (e.action === 'pause') {
-                //setWasExternallyPaused(true);
+
                 pauseVideo();
-            // Принудительно синхронизируем время после паузы
+            // Принудительная синхронизация времени после паузы
                 setTimeout(() => {
                     fetch(`/rooms/${room.id}/state`)
                         .then(res => res.json())
@@ -300,6 +313,7 @@ useEffect(() => {
     return () => clearInterval(interval);
 }, [isPlayerReady, room.id, currentTime, isSyncing]);
 
+
     const handleSubmitVideo = (e: React.SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -317,6 +331,8 @@ useEffect(() => {
             }
         });
     };
+
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#1a1a2e] to-[#16213e] relative overflow-hidden">
@@ -345,6 +361,24 @@ useEffect(() => {
                         >
                             Копировать ссылку
                         </button>
+
+                                    {isOwner && (
+                <button
+                    onClick={() => {
+                        if (confirm('Вы уверены, что хотите удалить комнату? Все сообщения будут потеряны.')) {
+                            router.delete(`/rooms/${room.id}`, {
+                                onSuccess: () => {
+                                    router.visit('/');
+                                }
+                            });
+                        }
+                    }}
+                    className="text-white/60 hover:text-red-400 transition-colors backdrop-blur-sm bg-white/5 px-4 py-2 rounded-full border border-white/10"
+                >
+                    Удалить комнату
+                </button>
+            )}
+
                         {!auth.user && (
                             <span className="text-white/50 text-sm backdrop-blur-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
                                 Войдите чтобы управлять
@@ -467,30 +501,47 @@ useEffect(() => {
                     </div>
 
                     {/* Чат */}
-                    <div className={`${chatPosition === 'side' ? 'lg:w-1/4' : 'w-full lg:w-[80%] mx-auto'}`}>
-                        <div className={`bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 p-4 flex flex-col ${chatPosition === 'side' ? 'h-[600px]' : 'h-[400px]'}`}>
-                            <h2 className="text-white font-light text-xl mb-4 pb-2 border-b border-white/10">
-                                Чат
-                            </h2>
-                            <div className="flex-1 overflow-y-auto mb-4 space-y-2">
-                                <div className="text-white/50 text-sm text-center">
-                                    Сообщения появятся после добавления WebSockets
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="Введите сообщение..."
-                                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-purple-500/50 transition-colors"
-                                />
-                                <button className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300">
-                                    →
-                                </button>
+    <div className={`${chatPosition === 'side' ? 'lg:w-1/4' : 'w-full lg:w-[80%] mx-auto'}`}>
+    <div className={`bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 flex flex-col overflow-hidden ${chatPosition === 'side' ? 'h-[600px]' : 'h-[400px]'}`}>
+        <div className="flex justify-between items-center px-6 py-4 border-b border-white/10 flex-shrink-0">
+    <h2 className="text-white font-light text-xl">Чат</h2>
+    {isOwner && (
+    <button
+        onClick={() => {
+            if (confirm('Очистить историю чата?')) {
+                router.delete(`/rooms/${room.id}/chat/clear`, {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+
+                setChatKey(prev => prev + 1);
+                        }
+                    });
+                }
+                    }}
+        className="text-white/50 hover:text-red-400 transition-colors"
+        title="Очистить чат"
+    >
+        🗑️
+    </button>
+    )}
+</div>
+
+                                    <div className="flex-1 min-h-0">
+            <RoomChat
+                key={chatKey}
+                roomId={room.id}
+                auth={auth}
+                csrf_token={csrf_token}
+            />
+                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+);
 }
+
+
+

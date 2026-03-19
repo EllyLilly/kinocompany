@@ -40,6 +40,6 @@ class VideoControlController extends Controller
             'roomId' => $roomId
         ]);
 
-        return redirect()->back();
+        return response()->json(['status' => 'ok']);
     }
 }

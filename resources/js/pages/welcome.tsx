@@ -124,7 +124,7 @@ export default function Welcome({
 
                                     <input
                                         type="url"
-                                        placeholder="Ссылка на YouTube или Rutube"
+                                        placeholder="Ссылка на Rutube"
                                         value={form.video_url}
                                         onChange={(e) => setForm({...form, video_url: e.target.value})}
                                         className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-purple-500/50 transition-colors"

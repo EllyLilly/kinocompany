@@ -22,9 +22,10 @@ class RoomController extends Controller
 
     if (Auth::check()) {
         $validated['user_id'] = Auth::id();
+    } else {
+        $validated['session_id'] = session()->getId();
     }
 
-    // Извлечение ID
     $validated['video_id'] = Room::extractVideoIdFromUrl($validated['video_url']);
 
     $room = Room::create($validated);
@@ -38,11 +39,24 @@ class RoomController extends Controller
         return Inertia::render('Rooms/Show', [
         'room' => $room,
         'roomId' => $room->id,
+        'csrf_token' => csrf_token(),
         ]);
     }
 
         public function myRooms()
-    {
-        return Inertia::render('Rooms/MyRooms');
+            {
+                if (Auth::check()) {
+                $rooms = Room::where('user_id', Auth::id())
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            } else {
+                $rooms = Room::where('session_id', session()->getId())
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            }
+
+            return Inertia::render('Rooms/MyRooms', [
+                'rooms' => $rooms
+            ]);
     }
 }

@@ -1,23 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from '@inertiajs/react';
+import React from 'react';
+import { Link, router } from '@inertiajs/react';
 import Header from '@/components/Header';
 
 interface Room {
     id: number;
     name: string;
     video_url: string;
+    description: string | null;
     created_at: string;
 }
 
-export default function MyRooms() {
-    const [rooms, setRooms] = useState<Room[]>([]);
+interface Props {
+    rooms: Room[];
+}
 
-    useEffect(() => {
-    const saved = localStorage.getItem('myRooms');
-    if (saved) {
-        setRooms(JSON.parse(saved));
-    }
-}, []);
+export default function MyRooms({ rooms }: Props) {
+    const handleDelete = (e: React.MouseEvent, roomId: number) => {
+        e.preventDefault(); // чтобы не переходить по ссылке
+        e.stopPropagation();
+
+        if (confirm('Вы уверены, что хотите удалить комнату?')) {
+            router.delete(`/rooms/${roomId}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    // Комната удалится из списка автоматически
+                    console.log('Комната удалена');
+                }
+            });
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-[#0f0f0f] via-[#1a1a2e] to-[#16213e]">
@@ -39,21 +50,36 @@ export default function MyRooms() {
                 ) : (
                     <div className="grid gap-4">
                         {rooms.map(room => (
-                            <Link
+                            <div
                                 key={room.id}
-                                href={`/rooms/${room.id}`}
-                                className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10 hover:bg-white/10 transition-all"
+                                className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 hover:bg-white/10 transition-all"
                             >
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-white font-medium text-lg">{room.name}</h3>
-                                        <p className="text-white/50 text-sm mt-1">
-                                            {new Date(room.created_at).toLocaleDateString()}
-                                        </p>
+                                <Link
+                                    href={`/rooms/${room.id}`}
+                                    className="block p-4"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="text-white font-medium text-lg">{room.name}</h3>
+                                            {room.description && (
+                                                <p className="text-white/30 text-sm mt-1">{room.description}</p>
+                                            )}
+                                            <p className="text-white/50 text-sm mt-1">
+                                                {new Date(room.created_at).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                        <span className="text-white/30">→</span>
                                     </div>
-                                    <span className="text-white/30">→</span>
+                                </Link>
+                                <div className="border-t border-white/10 px-4 py-2 flex justify-end">
+                                    <button
+                                        onClick={(e) => handleDelete(e, room.id)}
+                                        className="text-sm text-red-400 hover:text-red-300 transition-colors"
+                                    >
+                                        Удалить комнату
+                                    </button>
                                 </div>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 )}

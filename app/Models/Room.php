@@ -13,6 +13,7 @@ class Room extends Model
         'video_id',
         'description',
         'user_id',
+        'session_id',
         'is_active',
         'current_time',
         'playing',
