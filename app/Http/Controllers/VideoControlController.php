@@ -7,6 +7,7 @@ use App\Events\VideoControl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Pusher\Pusher;
+use App\DTO\VideoControlDTO;
 
 class VideoControlController extends Controller
 {
@@ -25,7 +26,14 @@ class VideoControlController extends Controller
         $room->last_state_update = now();
         $room->save();
 
-        // Отправка всем кроме отправителя
+        $dto = new VideoControlDTO(
+            roomId: $roomId,
+            action: $request->action,
+            currentTime: $request->currentTime ?? 0,
+            userId: Auth::id(),
+        );
+
+        // Отправка через Pusher
         $pusher = new Pusher(
             config('broadcasting.connections.pusher.key'),
             config('broadcasting.connections.pusher.secret'),
@@ -33,12 +41,7 @@ class VideoControlController extends Controller
             config('broadcasting.connections.pusher.options')
         );
 
-        $pusher->trigger('room.' . $roomId, 'video.control', [
-            'action' => $request->action,
-            'currentTime' => $request->currentTime ?? 0,
-            'userId' => Auth::id(),
-            'roomId' => $roomId
-        ]);
+        $pusher->trigger('room.' . $roomId, 'video.control', $dto->toArray());
 
         return response()->json(['status' => 'ok']);
     }

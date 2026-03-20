@@ -8,6 +8,7 @@ use App\Events\MessageSent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\DTO\MessageDTO;
 
 class RoomChatController extends Controller
 {
@@ -30,24 +31,24 @@ class RoomChatController extends Controller
             'message' => 'required|string|max:500',
         ]);
 
+        $dto = MessageDTO::fromRequest($request, $room->id);
+
         $message = Message::create([
-            'sender_id' => Auth::id(),
-            'room_id' => $room->id,
-            'message' => $request->message,
+            'sender_id' => $dto->sender_id,
+            'room_id' => $dto->room_id,
+            'message' => $dto->message,
             'is_read' => false,
         ]);
 
-        // Загружаем отправителя
         $message->load('sender');
 
         Log::info('Broadcasting message', [
-    'room_id' => $room->id,
-    'channel' => 'room.' . $room->id,
-    'event' => 'message.sent',
-    'message_id' => $message->id
-]);
+            'room_id' => $room->id,
+            'channel' => 'chat.' . $room->id,
+            'event' => 'message.sent',
+            'message_id' => $message->id
+        ]);
 
-        // Отправляем событие
         broadcast(new MessageSent($message));
 
         return response()->json($message);
